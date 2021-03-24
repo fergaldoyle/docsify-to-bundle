@@ -1,0 +1,22 @@
+{
+  "name": "docsify-to-bundle",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./bin/cli.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": {
+    "docsify-to-bundle": "./bin/cli.js"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^0.21.1",
+    "chalk": "^4.1.0",
+    "glob": "^7.1.6",
+    "html-entities": "^2.1.1",
+    "jsdom": "^16.5.1",
+    "yargs": "16.2.0"
+  }
+}
