@@ -1,5 +1,5 @@
 const glob = require('glob');
-const fs = require('fs');
+const fs = require('fs-extra')
 const path = require('path');
 const JSDOM = require('jsdom').JSDOM;
 const axios = require('axios');
@@ -7,33 +7,49 @@ const chalk = require('chalk');
 const encode = require('html-entities').encode;
 
 function getUrl(url) {
-  if(url.startsWith('//')) {
+  if (url.startsWith('//')) {
     return 'https:' + url
   }
   return url;
 }
 
-function convert(folder, input, output) {
+function createScriptElement(document, code) {
+  const el = document.createElement('script');
+  el.type = 'text/javascript';
+  el.text = code;
+  return el;
+}
+
+const overrideScript = fs.readFileSync(path.join(__dirname, 'scripts', 'override.js'), 'utf8');
+const fixSearchScript = fs.readFileSync(path.join(__dirname, 'scripts', 'fix-search.js'), 'utf8');
+
+function convert({
+  folder,
+  input,
+  output,
+  embedStyles,
+  embedScripts
+}) {
+
   folder = path.normalize(folder || '.');
 
   // read the index and script to inject
   let html
   try {
     html = fs.readFileSync(path.join(folder, input), 'utf8');
-  } catch(e) {
+  } catch (e) {
     console.log(chalk.red(`Cannot find or open file: ${path.join(folder, input)}`));
     process.exit(1);
   }
-  const injectedScript = fs.readFileSync(`${__dirname}/script.js`, 'utf8');
 
   const dom = new JSDOM(html);
   const document = dom.window.document;
 
   // inject ajax override script into head
-  const script_tag = document.createElement('script');
-  script_tag.type = 'text/javascript';
-  script_tag.text = injectedScript;
-  document.head.appendChild(script_tag);
+  document.head.appendChild(createScriptElement(document, overrideScript));
+
+  // injects script at end of body
+  document.body.appendChild(createScriptElement(document, fixSearchScript));
 
   // create element to hold injected markdown content
   const mdEl = document.createElement('div');
@@ -51,30 +67,38 @@ function convert(folder, input, output) {
       mdEl.appendChild(pre);
     });
 
-    // Embed styles
+  
+    // ensure styles begin with https    
     for (const element of Array.from(document.querySelectorAll('[rel=stylesheet][href]'))) {
-      const {
-        data
-      } = await axios.get(getUrl(element.getAttribute('href')));
-      const styleEl = document.createElement('style');
-      styleEl.textContent = data;
-      element.insertAdjacentElement('beforebegin', styleEl);
-      element.remove();
-    }
+      const href = getUrl(element.getAttribute('href'))
+      element.setAttribute('href', href);
 
-    // Embed scripts
+      if (embedStyles && href.startsWith('http')) {
+        // Embed styles
+        const { data } = await axios.get(href);
+        const styleEl = document.createElement('style');
+        styleEl.textContent = data;
+        element.insertAdjacentElement('beforebegin', styleEl);
+        element.remove();
+      }
+    }   
+
+    // ensure scripts begin with https    
     for (const element of Array.from(document.querySelectorAll('script[src]'))) {
-      const {
-        data
-      } = await axios.get(getUrl(element.getAttribute('src')));
-      const script_tag = document.createElement('script');
-      script_tag.type = 'text/javascript';
-      script_tag.text = '\n' + data;
-      element.insertAdjacentElement('beforebegin', script_tag);
-      element.remove();
+      const src = getUrl(element.getAttribute('src'));
+      element.setAttribute('src', src);
+
+      // Embed scripts
+      if (embedScripts && src.startsWith('http')) {
+        const { data } = await axios.get(src);
+        element.insertAdjacentElement('beforebegin', createScriptElement(document, '\n' + data));
+        element.remove();
+      }
     }
+  
 
     // write the html doc out
+    fs.ensureFileSync(path.join(folder, output));
     fs.writeFileSync(path.join(folder, output), dom.serialize(), 'utf8');
     console.log(chalk.yellow(`Bundle written to: ${path.join(folder, output)}`));
   });

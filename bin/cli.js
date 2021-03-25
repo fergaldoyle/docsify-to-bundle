@@ -5,24 +5,34 @@ const convert = require('../index.js');
 
 yargs(hideBin(process.argv))
   .command({
-    command: '* [path]',
+    command: '* [folder]',
     builder: yargs =>
       yargs.options({
         'input': {
           default: 'index.html',
-          alias: 'i',
           nargs: 1,
           requiresArg: true,
           type: 'string'
         },
         'output': {
-          default: 'index-bundled.html',
-          alias: 'o',
+          default: 'index-desktop.html',
           nargs: 1,
           requiresArg: true,
           type: 'string'
+        },
+        'embed-styles': {
+          default: false,
+          nargs: 0,
+          requiresArg: false,
+          type: 'boolean'
+        },
+        'embed-scripts': {
+          default: false,
+          nargs: 0,
+          requiresArg: false,
+          type: 'boolean'
         }
       }),
-    handler: argv => convert(argv.path, argv.input, argv.output)
+    handler: convert
   })
   .argv

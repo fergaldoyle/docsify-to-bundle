@@ -1,5 +1,5 @@
 {
-  "name": "docsify-to-bundle",
+  "name": "docsify-to-desktop",
   "version": "1.0.0",
   "description": "",
   "main": "./bin/cli.js",
@@ -7,13 +7,14 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {
-    "docsify-to-bundle": "./bin/cli.js"
+    "docsify-to-desktop": "./bin/cli.js"
   },
   "author": "",
   "license": "MIT",
   "dependencies": {
     "axios": "^0.21.1",
     "chalk": "^4.1.0",
+    "fs-extra": "^9.1.0",
     "glob": "^7.1.6",
     "html-entities": "^2.1.1",
     "jsdom": "^16.5.1",
