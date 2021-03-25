@@ -8,7 +8,7 @@ It:
 * Bundles the contents of all .md files into the HTML
 * Patches `XMLHttpRequest` to trick it into loading the md content from the HTML file instead of a Http Request
 * Optionally downloads remote CSS and JS and embeds them into the HTML
-* Writes the to
+* Writes the new index.html file to `index-desktop.html`
 
 <br>
 
